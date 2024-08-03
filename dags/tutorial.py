@@ -6,6 +6,7 @@ from airflow.models.dag import DAG
 
 # Operatorsl; DAG 동작을 위해 사용
 from airflow.operators.bash import BashOperator
+from airflow.operators.email import EmailOperator
 
 with DAG(
     "my_first_dag",
@@ -39,7 +40,7 @@ with DAG(
     tags=["example"],
 ) as dag:
 
-    # t1, t2 및 t3는 operator를 인스턴스화하여 생성된 task의 예시
+    # t1, t2 및 t3, t4는 operator를 인스턴스화하여 생성된 task의 예시
     task1 = BashOperator(
         task_id="print_date",
         bash_command="date",  # 현재 날짜와 시간을 문자열로 출력
@@ -69,17 +70,17 @@ with DAG(
     This is a documentation placed anywhere
     """  # 그렇지 않은 경우 아래와 같이 작성
     templated_command = textwrap.dedent(
-        """
-        {% for i in range(5) %}
-            echo "{{ ds }}"
-            echo "{{ macros.ds_add(ds, 7)}}"
-        {% endfor %}
-        """
         # """
         # {% for i in range(5) %}
-        #     echo "Hello Airflow!"
+        #     echo "{{ ds }}"
+        #     echo "{{ macros.ds_add(ds, 7)}}"
         # {% endfor %}
         # """
+        """
+        {% for i in range(5) %}
+            echo "Hello Airflow!"
+        {% endfor %}
+        """
     )
 
     task3 = BashOperator(
@@ -88,4 +89,11 @@ with DAG(
         bash_command=templated_command,
     )
 
-    task1 >> [task2, task3]
+    task4 = EmailOperator(
+        task_id="send_email",
+        to="kimdong799@gmail.com",  # 수신자 이메일 주소
+        subject="Airflow Alert",
+        html_content="""<h3>DAG Completed</h3><p>This is a test email sent from an Airflow DAG.</p>""",
+    )
+
+    task1 >> [task2, task3] >> task4
